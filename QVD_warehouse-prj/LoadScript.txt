@@ -1,0 +1,105 @@
+﻿///$tab Main
+SET ThousandSep=' ';
+SET DecimalSep=',';
+SET MoneyThousandSep=' ';
+SET MoneyDecimalSep=',';
+SET MoneyFormat='# ##0,00 €;-# ##0,00 €';
+SET TimeFormat='hh:mm:ss';
+SET DateFormat='DD/MM/YYYY';
+SET TimestampFormat='DD/MM/YYYY hh:mm:ss[.fff]';
+SET MonthNames='janv.;févr.;mars;avr.;mai;juin;juil.;août;sept.;oct.;nov.;déc.';
+SET DayNames='lun.;mar.;mer.;jeu.;ven.;sam.;dim.';
+
+// Variable config
+$(include=../0_Ressources/config.txt);
+OLEDB CONNECT TO [Provider=SQLOLEDB.1;Persist Security Info=True;User ID=$(bdd_sql_stat_user);Initial Catalog=$(bdd_sql_stat_db_srp);Data Source=$(bdd_sql_stat_host);Use Procedure for Prepare=1;Auto Translate=True;Packet Size=4096;Use Encryption for Data=False;Tag with column collation when possible=False] (XPassword is $(bdd_sql_stat_pwd)); 
+///$tab MAPPING
+// Mapping des catégories de vente
+Map_RedColorWarehouse :
+	Mapping LOAD * Inline [
+		id, value
+		1, 255
+		2, 0
+		3, 98
+		4, 128
+		5, 204
+		6, 162		
+		7, 210
+		8, 179
+		9, 166
+		10, 171
+		11, 27
+		12, 255
+		13, 0
+		14, 196
+		15, 27
+		16, 204
+		17, 255
+		18, 98
+	];
+Map_GreenColorWarehouse:
+	Mapping LOAD * Inline [
+		id, value
+		1, 153
+		2, 78
+		3, 172
+		4, 89
+		5, 0
+		6, 68		
+		7, 120
+		8, 179
+		9, 216
+		10, 233
+		11, 125
+		12, 191
+		13, 127
+		14, 178
+		15, 125
+		16, 204
+		17, 125
+		18, 0
+	];
+Map_BlueColorWarehouse :
+	Mapping LOAD * Inline [
+		id, value
+		1, 51
+		2, 155
+		3, 30
+		4, 19
+		5, 0
+		6, 238		
+		7, 210
+		8, 179
+		9, 227
+		10, 188
+		11, 156
+		12, 201
+		13, 0
+		14, 214
+		15, 156
+		16, 0
+		17, 129
+		18, 0
+	];	
+///$tab LOAD
+// Chargement de la dimension "Warehouse"
+Dim_Warehouse :
+	LOAD
+		[Warehouse id],
+		if([Warehouse external] = -1, 'yes', 'no') 											as [Warehouse external],
+		upper(left([Warehouse label],1))&mid([Warehouse label],2,len([Warehouse label])-1) 	as [Warehouse label],
+		ApplyMap('Map_RedColorWarehouse', [Warehouse id], 'rgb(0,0,0)')						AS [Warehouse red],
+		ApplyMap('Map_GreenColorWarehouse', [Warehouse id], 'rgb(0,0,0)')					AS [Warehouse green],
+		ApplyMap('Map_BlueColorWarehouse', [Warehouse id], 'rgb(0,0,0)')					AS [Warehouse blue]
+	;		
+	SQL
+	SELECT
+		depot_id			AS [Warehouse id],
+		depot_externe		AS [Warehouse external],
+		depot_libelle		AS [Warehouse label]		
+	FROM depot d with (nolock)
+	;
+
+STORE Dim_Warehouse INTO QVD/Dim_Warehouse.qvd (qvd);
+
+DROP TABLE Dim_Warehouse;
