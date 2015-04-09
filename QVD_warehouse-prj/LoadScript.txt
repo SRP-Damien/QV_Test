@@ -102,4 +102,5 @@ Dim_Warehouse :
 
 STORE Dim_Warehouse INTO QVD/Dim_Warehouse.qvd (qvd);
 
+// Suppression de la table en mémoire
 DROP TABLE Dim_Warehouse;
